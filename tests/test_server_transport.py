@@ -28,8 +28,10 @@ class TestServerTransport(unittest.TestCase):
             server.mcp.settings.port,
             server.mcp.settings.streamable_http_path,
         )
+        self.saved_security = server.mcp.settings.transport_security.model_copy(deep=True)
 
     def tearDown(self):
+        server.mcp.settings.transport_security = self.saved_security
         for key, value in self.saved_env.items():
             if value is None:
                 os.environ.pop(key, None)
@@ -118,6 +120,16 @@ class TestServerTransport(unittest.TestCase):
         run.assert_called_once_with(transport="streamable-http")
         self.assertEqual(server.mcp.settings.host, "127.0.0.3")
         self.assertEqual(server.mcp.settings.port, 9012)
+
+    def test_non_loopback_host_is_admitted_by_rebinding_protection(self):
+        with patch.object(server.mcp, "run"):
+            server.main(["--transport", "streamable-http", "--host", "100.64.0.7"])
+
+        security = server.mcp.settings.transport_security
+        self.assertTrue(security.enable_dns_rebinding_protection)
+        self.assertIn("100.64.0.7:*", security.allowed_hosts)
+        self.assertIn("http://100.64.0.7:*", security.allowed_origins)
+        self.assertIn("127.0.0.1:*", security.allowed_hosts)
 
     def test_invalid_network_options_fail_before_server_start(self):
         invalid_options = (

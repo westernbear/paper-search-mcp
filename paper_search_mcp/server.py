@@ -2108,6 +2108,15 @@ def main(argv: list[str] | None = None) -> None:
     if auth_config is not None:
         run_protected_http(mcp, args.transport, auth_config)
     else:
+        # The SDK pins its Host/Origin allowlist to loopback at construction, so a
+        # non-loopback --host would answer every request with 421. Admit the bound
+        # address while keeping DNS-rebinding protection on.
+        # ponytail: wildcard binds (0.0.0.0/::) still need a reverse proxy or a concrete IP.
+        security = mcp.settings.transport_security
+        if security is not None and args.host not in ("127.0.0.1", "localhost", "::1"):
+            authority = f"[{args.host}]" if ":" in args.host else args.host
+            security.allowed_hosts.append(f"{authority}:*")
+            security.allowed_origins.append(f"http://{authority}:*")
         mcp.run(transport=args.transport)
 
 
