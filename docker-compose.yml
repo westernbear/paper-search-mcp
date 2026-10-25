@@ -16,6 +16,9 @@ services:
       # After editing keys: docker compose up -d (recreates the container).
       - path: ${HOME}/.config/paper-search-mcp/.env
         required: false
+      # Gitignored; later file wins on duplicate keys.
+      - path: ./.env
+        required: false
     environment:
       PAPER_SEARCH_MCP_TRANSPORT: streamable-http
       PAPER_SEARCH_MCP_HOST: ${MCP_BIND_IP:-100.109.247.104}
