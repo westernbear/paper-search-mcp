@@ -1,6 +1,6 @@
 # Shared streamable-HTTP server: one place for API keys, many clients.
 #   docker compose up -d --build
-# Endpoint: http://${MCP_BIND_IP}:8000/mcp
+# Endpoint: http://${PAPER_SEARCH_MCP_HOST}:${PAPER_SEARCH_MCP_PORT}/mcp
 services:
   paper-search-mcp:
     build: .
@@ -19,10 +19,12 @@ services:
       # Gitignored; later file wins on duplicate keys.
       - path: ./.env
         required: false
+    # HOST/PORT/PATH come from ./.env (compose interpolation); defaults below.
+    # After editing them: docker compose up -d
     environment:
       PAPER_SEARCH_MCP_TRANSPORT: streamable-http
-      PAPER_SEARCH_MCP_HOST: ${MCP_BIND_IP:-100.109.247.104}
-      PAPER_SEARCH_MCP_PORT: "8000"
-      PAPER_SEARCH_MCP_PATH: /mcp
+      PAPER_SEARCH_MCP_HOST: ${PAPER_SEARCH_MCP_HOST:-100.109.247.104}
+      PAPER_SEARCH_MCP_PORT: ${PAPER_SEARCH_MCP_PORT:-8000}
+      PAPER_SEARCH_MCP_PATH: ${PAPER_SEARCH_MCP_PATH:-/mcp}
     volumes:
       - ${HOME}/papers:/app/downloads
