@@ -1,0 +1,25 @@
+# Shared streamable-HTTP server: one place for API keys, many clients.
+#   docker compose up -d --build
+# Endpoint: http://${MCP_BIND_IP}:8000/mcp
+services:
+  paper-search-mcp:
+    build: .
+    command: ["paper-search-mcp"]
+    restart: unless-stopped
+    # Host networking so the server binds the Tailscale IP itself: reachable from
+    # tailnet devices only, and the Host check admits that address.
+    # Retries via restart policy if tailscale0 has no IP yet at boot.
+    network_mode: host
+    user: "1000:1000"
+    env_file:
+      # Real env vars, so they override the Dockerfile's empty ENV defaults.
+      # After editing keys: docker compose up -d (recreates the container).
+      - path: ${HOME}/.config/paper-search-mcp/.env
+        required: false
+    environment:
+      PAPER_SEARCH_MCP_TRANSPORT: streamable-http
+      PAPER_SEARCH_MCP_HOST: ${MCP_BIND_IP:-100.109.247.104}
+      PAPER_SEARCH_MCP_PORT: "8000"
+      PAPER_SEARCH_MCP_PATH: /mcp
+    volumes:
+      - ${HOME}/papers:/app/downloads
